@@ -6,11 +6,27 @@ import { v4 as uuid4 } from "uuid";
 import "./styling/app.css";
 
 function App() {
-  const [pause, setPause] = useState();
+  const [pause, setPause] = useState(true);
+  const [ticks, setTicks] = useState(null);
   const [targets, setTargets] = useState([uuid4()]);
 
+  const toggleTicks = () => {
+    if (pause) {
+      const newTicks = setInterval(onTick, 500);
+      setTicks(newTicks);
+    } else {
+      clearInterval(ticks);
+    }
+  };
+
+  function onTick() {
+    console.log("tick");
+  }
+
   const togglePause = () => {
-    setPause(!pause);
+    // manage game loop
+    setPause((prevState) => !prevState);
+    toggleTicks();
   };
 
   function removeTarget(id) {
@@ -35,9 +51,13 @@ function App() {
     <>
       <PauseScreen show={pause} />
       <PlayScreen hide={pause} />
-      <div className="container border">
-        <TargetSpawner pause={pause} targets={targets} remove={removeTarget} />
-      </div>
+      <TargetSpawner
+        pause={pause}
+        targets={targets}
+        remove={removeTarget}
+        className="container border"
+        id="target-container"
+      />
     </>
   );
 }
