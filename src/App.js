@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PauseScreen from "./components/PauseScreen";
 import PlayScreen from "./components/PlayScreen";
+import TargetSpawner from "./components/TargetSpawner";
 import { v4 as uuid4 } from "uuid";
 import "./styling/app.css";
 
@@ -13,7 +14,6 @@ function App() {
   };
 
   function removeTarget(id) {
-    console.log(id);
     const index = targets.indexOf(id);
     const newTargets = targets;
     newTargets.splice(index, 1);
@@ -32,15 +32,13 @@ function App() {
   };
 
   return (
-    <div>
+    <>
       <PauseScreen show={pause} />
-      <PlayScreen
-        hide={pause}
-        targets={targets}
-        remove={removeTarget}
-        add={addTarget}
-      />
-    </div>
+      <PlayScreen hide={pause} />
+      <div className="container border">
+        <TargetSpawner pause={pause} targets={targets} remove={removeTarget} />
+      </div>
+    </>
   );
 }
 
