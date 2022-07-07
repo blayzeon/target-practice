@@ -1,0 +1,9 @@
+html {
+  background-color: rgb(213, 213, 213);
+}
+
+div {
+  background-color: #fff;
+  padding: 0.5rem;
+  border-radius: 1rem;
+}
