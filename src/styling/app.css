@@ -94,3 +94,17 @@ sup {
   width: 100%;
   background-color: red;
 }
+
+.explosion {
+  border: none !important;
+  background-color: rgba(255, 255, 255, 0);
+  background-image: url("https://gifimage.net/wp-content/uploads/2017/06/explosion-gif-transparent-12.gif");
+  display: block;
+  background-size: var(--TARGET_WIDTH);
+  background-repeat: no-repeat;
+}
+
+.explosion * {
+  pointer-events: none;
+  visibility: hidden;
+}
