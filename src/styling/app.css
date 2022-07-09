@@ -1,3 +1,7 @@
+:root {
+  --TARGET_WIDTH: 7rem;
+}
+
 * {
   box-sizing: border-box !important;
 }
@@ -55,14 +59,38 @@ sup {
   border: 5px solid black;
 }
 
+.new-target {
+  visibility: hidden;
+}
+
+.target,
+.target div {
+  aspect-ratio: 1/1;
+  border-radius: 100rem;
+}
+
+.target,
+.target > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .target {
-  position: relative;
-  height: 1rem;
-  width: 1rem;
-  border-radius: 5rem;
+  position: absolute;
+  width: var(--TARGET_WIDTH);
   background-color: red;
-  outline: 1rem solid red;
-  border: 2rem solid white;
-  padding: 1rem;
+  padding: 0.4rem;
   cursor: crosshair;
+}
+
+.target > div {
+  width: 80%;
+  padding: 20%;
+  background-color: #fff;
+}
+
+.target > div > div {
+  width: 100%;
+  background-color: red;
 }

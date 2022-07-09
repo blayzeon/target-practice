@@ -9,11 +9,22 @@ function App() {
   /* <SETTINGS> */
   let MAX_TARGETS = 12;
   let TARGET_SPEED = 1;
+  let TARGET_WIDTH = 5;
 
   /* </SETTINGS> */
+
   const [pause, setPause] = useState(true);
   const [targets, setTargets] = useState([]);
   const [ticks, setTicks] = useState(null);
+
+  const setTargetWidth = () => {
+    // Any smaller than 3rem and the targets are too tiny
+    if (TARGET_WIDTH < 3) return;
+
+    document
+      .querySelector(":root")
+      .style.setProperty("--TARGET_WIDTH", TARGET_WIDTH + "rem");
+  };
 
   function getRandomInt(max, min = 0) {
     min = Math.ceil(min);
@@ -62,22 +73,42 @@ function App() {
   const onTick = () => {
     // move targets
     const allTargets = document.querySelectorAll('[data="target"]');
+    const containerElm = document.querySelector("#target-container");
+
+    function calcOffsets(container, elm) {
+      const big = container.getBoundingClientRect();
+      const small = elm;
+
+      const left = getRandomInt(
+        big.right - small.clientWidth,
+        big.left + small.clientWidth
+      );
+
+      const top = getRandomInt(
+        big.bottom - small.clientHeight,
+        big.top + small.clientHeight
+      );
+
+      return { top, left };
+    }
+
     allTargets.forEach((target) => {
-      const direction = "left"; //getRandomInt(2) === 0 ? "left" : "top";
-      const containerElm = document.querySelector("#target-container");
-      const container = containerElm.getBoundingClientRect();
       const elm = target.getBoundingClientRect();
 
-      function moveTarget(object, direction, speed) {
-        const offset = direction === "left" ? "offsetLeft" : "offsetTop";
-
-        object.style[direction] = object[offset] + speed + "px";
+      function moveTarget(left, top, speed = 0) {
+        target.style.left = left + speed + "px";
+        target.style.top = top + speed + "px";
       }
+
+      // check for new targets and relocate them to a random spot
+      if (target.classList.contains("new-target")) {
+        const offsets = calcOffsets(containerElm, target);
+        moveTarget(offsets.left, offsets.top);
+        target.classList.remove("new-target");
+      }
+      const direction = "left"; //getRandomInt(2) === 0 ? "left" : "top";
 
       let value = TARGET_SPEED; //getRandomInt(2) === 0 ? number : TARGET_SPEED * -1;
-      if (container.right <= elm.right) {
-        value = TARGET_SPEED * -1;
-      }
 
       //moveTarget(target, direction, TARGET_SPEED);
     });
@@ -98,6 +129,7 @@ function App() {
         <TargetSpawner
           pause={pause}
           targets={targets}
+          width={TARGET_WIDTH}
           removeTarget={removeTarget}
           containerId="target-container"
           getRandomInt={getRandomInt}
