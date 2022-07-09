@@ -53,14 +53,36 @@ function App() {
     }
   }
 
-  function removeTarget(id) {
-    const newTargets = targets;
-    const index = newTargets.indexOf(id);
-    newTargets.splice(index, 1);
-    setTargets([...newTargets]);
+  function destroyTarget(id) {
+    const targetElm = document.getElementById(id);
+    targetElm.classList.add("explosion");
+    targetElm.setAttribute("data", "animation");
 
-    addTarget(newTargets);
+    setTimeout(() => {
+      targetElm.classList.remove("explosion");
+      targetElm.style.display = "none";
+      targetElm.setAttribute("data", "destroyed");
+    }, 800);
   }
+
+  const removeDestroyedTargets = () => {
+    const destroyed = document.querySelectorAll('[data="destroyed"]');
+    if (destroyed.length === 0) return;
+
+    const newTargets = targets;
+    destroyed.forEach((elm) => {
+      const index = newTargets.indexOf(elm.id);
+      if (newTargets[index]) {
+        newTargets.splice(index, 1);
+      } else {
+        console.error(
+          "destroyed element is not indexing properly for removeDestroyedTargets()."
+        );
+      }
+    });
+    setTargets([...newTargets]);
+    addTarget(newTargets);
+  };
 
   const toggleTicks = () => {
     if (pause) {
@@ -74,6 +96,9 @@ function App() {
   };
 
   const onTick = () => {
+    // clear destroyed
+    removeDestroyedTargets();
+
     // move targets
     const allTargets = document.querySelectorAll('[data="target"]');
     const containerElm = document.querySelector("#target-container");
@@ -178,7 +203,7 @@ function App() {
           pause={pause}
           targets={targets}
           width={TARGET_WIDTH}
-          removeTarget={removeTarget}
+          removeTarget={destroyTarget}
           containerId="target-container"
           getRandomInt={getRandomInt}
         />
