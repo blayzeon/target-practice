@@ -7,9 +7,10 @@ import "./styling/app.css";
 
 function App() {
   /* <SETTINGS> */
-  let MAX_TARGETS = 12;
-  let TARGET_SPEED = 1;
+  let MAX_TARGETS = 5;
+  let TARGET_SPEED = 5;
   let TARGET_WIDTH = 5;
+  let TARGET_DELAY = 1000;
 
   /* </SETTINGS> */
 
@@ -25,6 +26,8 @@ function App() {
       .querySelector(":root")
       .style.setProperty("--TARGET_WIDTH", TARGET_WIDTH + "rem");
   };
+
+  setTargetWidth();
 
   function getRandomInt(max, min = 0) {
     min = Math.ceil(min);
@@ -92,25 +95,70 @@ function App() {
       return { top, left };
     }
 
+    function isCollision(container, child) {
+      const walls = container.getBoundingClientRect();
+      const elm = child.getBoundingClientRect();
+
+      if (
+        walls.left >= elm.left ||
+        walls.right <= elm.right ||
+        walls.top >= elm.top ||
+        walls.bottom <= elm.bottom
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function moveTarget(
+      target,
+      left,
+      top,
+      speed = { left: 0, top: 0 },
+      multiplier = 1
+    ) {
+      target.style.left = left + speed.left * multiplier + "px";
+      target.style.top = top + speed.top * multiplier + "px";
+    }
+
     allTargets.forEach((target) => {
-      const elm = target.getBoundingClientRect();
+      const moveMe = () => {
+        const multiplier = target.getAttribute("data-speed");
+        const direction = target.getAttribute("data-direction");
 
-      function moveTarget(left, top, speed = 0) {
-        target.style.left = left + speed + "px";
-        target.style.top = top + speed + "px";
-      }
+        // chooses the direction to move
+        const speed = {
+          left: direction === "left" ? TARGET_SPEED : 0,
+          top: direction === "top" ? TARGET_SPEED : 0,
+        };
 
-      // check for new targets and relocate them to a random spot
+        const left = target.offsetLeft;
+        const top = target.offsetTop;
+        moveTarget(target, left, top, speed, multiplier);
+      };
+
+      // check for new targets and relocate them to a random spot and assign a direction
       if (target.classList.contains("new-target")) {
+        // place randomly
         const offsets = calcOffsets(containerElm, target);
-        moveTarget(offsets.left, offsets.top);
+        moveTarget(target, offsets.left, offsets.top);
         target.classList.remove("new-target");
+
+        // assign direction based off of the furthest wall
+        const direction = getRandomInt(2) === 0 ? "left" : "top";
+        const containerSize =
+          direction === "left" ? "clientWidth" : "clientHeight";
+        const multiplier =
+          offsets[direction] > containerElm[containerSize] / 2 ? -1 : 1;
+
+        target.setAttribute("data-speed", multiplier);
+        target.setAttribute("data-direction", direction);
       }
-      const direction = "left"; //getRandomInt(2) === 0 ? "left" : "top";
 
-      let value = TARGET_SPEED; //getRandomInt(2) === 0 ? number : TARGET_SPEED * -1;
+      // move the target
 
-      //moveTarget(target, direction, TARGET_SPEED);
+      moveMe();
     });
   };
 
