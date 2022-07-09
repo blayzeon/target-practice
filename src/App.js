@@ -7,11 +7,12 @@ import "./styling/app.css";
 
 function App() {
   /* <SETTINGS> */
-  let MAX_TARGETS = 2;
+  let MAX_TARGETS = 12;
+  let TARGET_SPEED = 1;
 
   /* </SETTINGS> */
   const [pause, setPause] = useState(true);
-  const [targets, setTargets] = useState([uuid4()]);
+  const [targets, setTargets] = useState([]);
   const [ticks, setTicks] = useState(null);
 
   function getRandomInt(max, min = 0) {
@@ -25,43 +26,60 @@ function App() {
     // manage game loop
     setPause((prevState) => !prevState);
     toggleTicks();
+    addTarget(targets);
   };
 
-  function removeTarget(id) {
-    const index = targets.indexOf(id);
-    const newTargets = targets;
-    newTargets.splice(index, 1);
-    setTargets([...newTargets]);
+  function addTarget(currentTargets, amount = MAX_TARGETS) {
+    if (currentTargets.length < amount) {
+      const newTargets = currentTargets;
+      newTargets.push(uuid4());
+      setTargets([...newTargets]);
+
+      addTarget(newTargets, amount);
+    }
   }
 
-  const addTarget = () => {
-    setTargets([...targets, uuid4()]);
-  };
+  function removeTarget(id) {
+    const newTargets = targets;
+    const index = newTargets.indexOf(id);
+    newTargets.splice(index, 1);
+    setTargets([...newTargets]);
+
+    addTarget(newTargets);
+  }
 
   const toggleTicks = () => {
     if (pause) {
+      // unpause the game
       const newTicks = setInterval(onTick, 500);
       setTicks((prevState) => newTicks);
     } else {
+      // pause the game
       clearInterval(ticks);
     }
   };
 
   const onTick = () => {
-    if (targets.length < MAX_TARGETS) {
-      addTarget();
-    }
-
+    // move targets
     const allTargets = document.querySelectorAll('[data="target"]');
     allTargets.forEach((target) => {
-      const direction = getRandomInt(2) === 0 ? "left" : "top";
-      const number = getRandomInt(20);
-      const value = getRandomInt(2) === 0 ? number : number * -1;
+      const direction = "left"; //getRandomInt(2) === 0 ? "left" : "top";
+      const containerElm = document.querySelector("#target-container");
+      const container = containerElm.getBoundingClientRect();
+      const elm = target.getBoundingClientRect();
 
-      const x = target.offsetLeft;
-      const y = target.offsetTop;
+      function moveTarget(object, direction, speed) {
+        const offset = direction === "left" ? "offsetLeft" : "offsetTop";
 
-      target.style[direction] = x + value + "px";
+        object.style[direction] = object[offset] + speed + "px";
+      }
+
+      let value = TARGET_SPEED; //getRandomInt(2) === 0 ? number : TARGET_SPEED * -1;
+      if (container.right <= elm.right) {
+        value = TARGET_SPEED * -1;
+      }
+
+      //moveTarget(target, direction, TARGET_SPEED);
     });
   };
 
@@ -80,7 +98,7 @@ function App() {
         <TargetSpawner
           pause={pause}
           targets={targets}
-          remove={removeTarget}
+          removeTarget={removeTarget}
           containerId="target-container"
           getRandomInt={getRandomInt}
         />
