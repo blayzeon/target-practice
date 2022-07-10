@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function PauseScreen(props) {
+  const [patternName, setName] = useState("random");
   const setTargets = () => {
     const a = prompt(
       "Enter the max number of targets that can appear on screen: "
@@ -33,6 +34,21 @@ export default function PauseScreen(props) {
     props.controls.width.set(answer);
   };
 
+  const setSpawn = () => {
+    const a = prompt("Enter the spawn delay in milliseconds: ");
+
+    const answer = parseInt(a);
+    if (!answer) return;
+    if (isNaN(answer)) return;
+
+    props.controls.spawn.set(answer);
+  };
+
+  const setPattern = () => {
+    const newName = props.controls.pattern.set();
+    setName(newName);
+  };
+
   if (props.show) {
     return (
       <div id="pause-menu">
@@ -47,6 +63,10 @@ export default function PauseScreen(props) {
           <button onClick={setWidth}>
             Target Width: {props.controls.width.current}
           </button>
+          <button onClick={setSpawn}>
+            Spawn Delay: {props.controls.spawn.current}
+          </button>
+          <button onClick={setPattern}>Pattern: {patternName}</button>
         </div>
         <div className="flex-center popup">
           <div>

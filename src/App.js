@@ -3,39 +3,49 @@ import PauseScreen from "./components/PauseScreen";
 import TargetSpawner from "./components/TargetSpawner";
 import { v4 as uuid4 } from "uuid";
 import "./styling/app.css";
-import { clear } from "@testing-library/user-event/dist/clear";
 
 function App() {
   /* <SETTINGS> */
   const MOVEMENT_LAG = 60;
-  const [SPAWN_TIMER, setTimer] = useState(500);
+  const [SPAWN_TIMER, setTimer] = useState(700);
   const [score, setScore] = useState(0);
   const [MAX_TARGETS, setMaxTargets] = useState(4);
   const [TARGET_SPEED, setTargetSpeed] = useState(3);
   const [TARGET_WIDTH, setMaxWidth] = useState(5);
   const [streak, setStreak] = useState(0);
+  const [pIndex, setIndex] = useState(false);
   const PATTERNS = [
     [
       {
+        name: "straight (x-axis)",
         speed: [TARGET_SPEED, 0], // left
-        multiplier: [3, 3],
+        multiplier: [2, 2],
       },
     ],
     [
       {
-        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
-        multiplier: [1, 1],
-      },
-    ],
-    [
-      {
+        name: "straight (y-axis)",
         speed: [0, TARGET_SPEED], // up
         multiplier: [2, 2],
       },
     ],
     [
       {
-        // L-shape
+        name: "diagonal (up)",
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [1, 1],
+      },
+    ],
+    [
+      {
+        name: "diagonal (down)",
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [-1, -1],
+      },
+    ],
+    [
+      {
+        name: "L",
         speed: [0, TARGET_SPEED], // down
         multiplier: [-2, -2],
       },
@@ -123,7 +133,7 @@ function App() {
     ],
     [
       {
-        // leap frog
+        name: "leap",
         speed: [0, 0], // pause
         multiplier: [5, 5],
       },
@@ -178,7 +188,7 @@ function App() {
     ],
     [
       {
-        // charge 'n shoot
+        name: "sling",
         speed: [TARGET_SPEED, 0], // windup
         multiplier: [-4, 0],
       },
@@ -289,7 +299,7 @@ function App() {
     ],
     [
       {
-        // bubble
+        name: "spiral",
         speed: [0, TARGET_SPEED], // down
         multiplier: [-1, -1],
       },
@@ -332,11 +342,32 @@ function App() {
     ],
   ];
 
-  /* </SETTINGS> */
-
   const [pause, setPause] = useState(true);
   const [targets, setTargets] = useState([]);
-  const [ticks, setTicks] = useState([]);
+  const [ticks, setTicks] = useState({ move: null, spawn: null });
+  /* </SETTINGS> */
+
+  const togglePatterns = () => {
+    const patternsCopy = PATTERNS;
+
+    if (pIndex === false) {
+      setIndex(0);
+      return patternsCopy[0][0].name;
+    }
+
+    const nextIndex = pIndex + 1;
+    if (nextIndex >= PATTERNS.length) {
+      setIndex(false);
+      return "random";
+    }
+
+    setIndex((prevIndex) => (prevIndex += 1));
+    return patternsCopy[nextIndex][0].name;
+  };
+
+  function updateSpawnTimer(newTime) {
+    setTimer(newTime);
+  }
 
   const handleMove = () => {
     // move targets
@@ -379,13 +410,14 @@ function App() {
     function moveTarget(
       target,
       patternObj,
+      frame,
       reverse = [1, 1],
       leftOffset,
       topOffset
     ) {
       const left = leftOffset ? leftOffset : target.offsetLeft;
       const top = topOffset ? topOffset : target.offsetTop;
-      const obj = patternObj ? patternObj : PATTERNS[0];
+      const obj = patternObj[frame] ? patternObj[frame] : patternObj[0];
       target.style.left =
         left + obj.speed[0] * obj.multiplier[0] * reverse[0] + "px";
       target.style.top =
@@ -396,7 +428,7 @@ function App() {
       const moveMe = () => {
         const frame = parseInt(target.getAttribute("data-frame"));
         const patternIndex = target.getAttribute("id").split(",");
-        const myPattern = PATTERNS[patternIndex[1]];
+        const myPattern = PATTERNS[pIndex === false ? patternIndex[1] : pIndex];
 
         // spawn kill protection
         let reverse = target.getAttribute("data-reverse");
@@ -412,7 +444,7 @@ function App() {
         }
 
         // move the target and increase frame
-        moveTarget(target, myPattern[frame], reverse);
+        moveTarget(target, myPattern, frame, reverse);
         const newIndex = frame + 1 > myPattern.length - 1 ? 0 : frame + 1;
         target.setAttribute("data-frame", newIndex);
       };
@@ -423,10 +455,13 @@ function App() {
         const offsets = calcOffsets(containerElm, target);
         moveTarget(
           target,
-          {
-            speed: [0, 0],
-            multiplier: [1, 1],
-          },
+          [
+            {
+              speed: [0, 0],
+              multiplier: [1, 1],
+            },
+          ],
+          0,
           [1, 1],
           offsets.left,
           offsets.top
@@ -481,14 +516,15 @@ function App() {
 
   function toggleTicks(clearCondition = true, startCondition = true) {
     if (clearCondition) {
-      clearInterval(ticks[0]);
+      clearInterval(ticks.spawn);
+      clearInterval(ticks.move);
     }
 
     if (startCondition) {
       const move = setInterval(handleMove, MOVEMENT_LAG);
       //handleSpawn();
       const spawn = setInterval(handleSpawn, SPAWN_TIMER);
-      setTicks((prevState) => [move, spawn]);
+      setTicks({ move: move, spawn: spawn });
 
       if (score === 0) {
         handleSpawn();
@@ -504,13 +540,6 @@ function App() {
     }
 
     setScore((prevScore) => (prevScore += amount));
-  }
-
-  function updateSpawnTimer(newTime) {
-    if (isNaN(newTime)) return;
-
-    setTimer(newTime);
-    return newTime;
   }
 
   function updateStreak(bool) {
@@ -591,6 +620,8 @@ function App() {
     max: { current: MAX_TARGETS, set: setMaxTargets },
     speed: { current: TARGET_SPEED, set: setTargetSpeed },
     width: { current: TARGET_WIDTH, set: setTargetWidth },
+    spawn: { current: SPAWN_TIMER, set: updateSpawnTimer },
+    pattern: { current: pIndex, set: togglePatterns },
   };
 
   return (
