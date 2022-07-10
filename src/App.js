@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PauseScreen from "./components/PauseScreen";
-import PlayScreen from "./components/PlayScreen";
 import TargetSpawner from "./components/TargetSpawner";
 import { v4 as uuid4 } from "uuid";
 import "./styling/app.css";
@@ -8,12 +7,226 @@ import "./styling/app.css";
 function App() {
   /* <SETTINGS> */
   const INTERVAL = 60;
-  let MAX_TARGETS = 11;
-  let TARGET_SPEED = 5;
-  let TARGET_WIDTH = 5;
-  let TARGET_DELAY = 80;
+  const [score, setScore] = useState(0);
+  const [MAX_TARGETS, setMaxTargets] = useState(1);
+  const [TARGET_SPEED, setTargetSpeed] = useState(3);
+  const [TARGET_WIDTH, setMaxWidth] = useState(5);
+  const [streak, setStreak] = useState(0);
   const PATTERNS = [
     [
+      {
+        speed: [TARGET_SPEED, 0], // left
+        multiplier: [1, 1],
+      },
+    ],
+    [
+      {
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [1, 1],
+      },
+    ],
+    [
+      {
+        speed: [0, TARGET_SPEED], // up
+        multiplier: [1, 1],
+      },
+    ],
+    [
+      {
+        // L
+        speed: [0, TARGET_SPEED], // down
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [-1, -1],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // right
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // right
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // right
+        multiplier: [-2, -2],
+      },
+    ],
+    [
+      {
+        // leap frog
+        speed: [0, 0], // pause
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, TARGET_SPEED], // up
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, TARGET_SPEED], // up
+        multiplier: [5, 5],
+      },
+    ],
+    [
+      {
+        // charge 'n shoot
+        speed: [TARGET_SPEED, 0], // left
+        multiplier: [1, 1],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // windup
+        multiplier: [-5, 0],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-4, 0],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-3, 0],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-2, 0],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-1, 0],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [5, 5],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // left
+        multiplier: [32, 32],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [16, 16],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [8, 8],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [4, 4],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [2, 2],
+      },
       {
         speed: [TARGET_SPEED, 0],
         multiplier: [1, 1],
@@ -21,8 +234,45 @@ function App() {
     ],
     [
       {
-        speed: [TARGET_SPEED, 0],
+        // bubble
+        speed: [0, TARGET_SPEED], // down
+        multiplier: [-1, -1],
+      },
+      {
+        speed: [0, TARGET_SPEED], // down
+        multiplier: [-1, -1],
+      },
+      {
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [-1, -1],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // right
+        multiplier: [-1, -1],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // right
+        multiplier: [-1, -1],
+      },
+      {
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [-1, 1],
+      },
+      {
+        speed: [0, TARGET_SPEED], // up
         multiplier: [1, 1],
+      },
+      {
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [1, 1],
+      },
+      {
+        speed: [TARGET_SPEED, 0], // left
+        multiplier: [1, 1],
+      },
+      {
+        speed: [TARGET_SPEED, TARGET_SPEED], // diagonal
+        multiplier: [1, -1],
       },
     ],
   ];
@@ -32,6 +282,24 @@ function App() {
   const [pause, setPause] = useState(true);
   const [targets, setTargets] = useState([]);
   const [ticks, setTicks] = useState(null);
+
+  function updateScore(amount) {
+    if (amount > 0) {
+      updateStreak(true);
+    } else {
+      updateStreak(false);
+    }
+
+    setScore((prevScore) => (prevScore += amount));
+  }
+
+  function updateStreak(bool) {
+    if (bool) {
+      setStreak((prevStreak) => (prevStreak += 1));
+    } else {
+      setStreak(0);
+    }
+  }
 
   const setTargetWidth = () => {
     // Any smaller than 3rem and the targets are too tiny
@@ -61,7 +329,8 @@ function App() {
   function addTarget(currentTargets, amount = MAX_TARGETS) {
     if (currentTargets.length < amount) {
       const newTargets = currentTargets;
-      newTargets.push(uuid4());
+      const elmId = uuid4() + "," + getRandomInt(PATTERNS.length, 0);
+      newTargets.push(elmId);
       setTargets([...newTargets]);
 
       addTarget(newTargets, amount);
@@ -169,27 +438,26 @@ function App() {
 
     allTargets.forEach((target) => {
       const moveMe = () => {
-        const index = parseInt(target.getAttribute("data-frame"));
-        const myPattern = PATTERNS[0][index];
+        const frame = parseInt(target.getAttribute("data-frame"));
+        const patternIndex = target.getAttribute("id").split(",");
+        const myPattern = PATTERNS[patternIndex[1]];
 
         // spawn kill protection
         let reverse = target.getAttribute("data-reverse");
 
         if (reverse === "true") {
           reverse = [];
-          console.log(true);
           const offsets = calcOffsets(containerElm, target);
           reverse.push(offsets.left > containerElm.clientWidth / 2 ? -1 : 1);
           reverse.push(offsets.top > containerElm.clientHeight / 2 ? -1 : 1);
           target.setAttribute("data-reverse", `${reverse[0]},${reverse[1]}`);
-          console.log(reverse);
         } else {
           reverse = reverse.split(",");
         }
 
         // move the target and increase frame
-        moveTarget(target, myPattern, reverse);
-        const newIndex = index + 1 >= PATTERNS[0].length - 1 ? 0 : index + 1;
+        moveTarget(target, myPattern[frame], reverse);
+        const newIndex = frame + 1 > myPattern.length - 1 ? 0 : frame + 1;
         target.setAttribute("data-frame", newIndex);
       };
 
@@ -213,6 +481,7 @@ function App() {
       // move the target
       moveMe();
       if (isCollision(containerElm, target)) {
+        updateScore(-1);
         destroyTarget(target.getAttribute("id"));
       }
     });
@@ -225,10 +494,20 @@ function App() {
     }
   };
 
+  const controls = {
+    max: { current: MAX_TARGETS, set: setMaxTargets },
+    speed: { current: TARGET_SPEED, set: setTargetSpeed },
+    width: { current: TARGET_WIDTH, set: setMaxWidth },
+  };
+
   return (
     <>
-      <PauseScreen show={pause} />
-      <PlayScreen hide={pause} />
+      <PauseScreen
+        show={pause}
+        controls={controls}
+        score={score}
+        streak={streak}
+      />
       <div id="target-container" className="container border">
         <TargetSpawner
           pause={pause}
@@ -237,6 +516,7 @@ function App() {
           removeTarget={destroyTarget}
           containerId="target-container"
           getRandomInt={getRandomInt}
+          incrScore={updateScore}
         />
       </div>
     </>
