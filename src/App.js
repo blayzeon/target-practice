@@ -3,12 +3,14 @@ import PauseScreen from "./components/PauseScreen";
 import TargetSpawner from "./components/TargetSpawner";
 import { v4 as uuid4 } from "uuid";
 import "./styling/app.css";
+import { clear } from "@testing-library/user-event/dist/clear";
 
 function App() {
   /* <SETTINGS> */
-  const INTERVAL = 60;
+  const MOVEMENT_LAG = 60;
+  const [SPAWN_TIMER, setTimer] = useState(500);
   const [score, setScore] = useState(0);
-  const [MAX_TARGETS, setMaxTargets] = useState(1);
+  const [MAX_TARGETS, setMaxTargets] = useState(4);
   const [TARGET_SPEED, setTargetSpeed] = useState(3);
   const [TARGET_WIDTH, setMaxWidth] = useState(5);
   const [streak, setStreak] = useState(0);
@@ -16,7 +18,7 @@ function App() {
     [
       {
         speed: [TARGET_SPEED, 0], // left
-        multiplier: [1, 1],
+        multiplier: [3, 3],
       },
     ],
     [
@@ -28,7 +30,7 @@ function App() {
     [
       {
         speed: [0, TARGET_SPEED], // up
-        multiplier: [1, 1],
+        multiplier: [2, 2],
       },
     ],
     [
@@ -334,108 +336,9 @@ function App() {
 
   const [pause, setPause] = useState(true);
   const [targets, setTargets] = useState([]);
-  const [ticks, setTicks] = useState(null);
+  const [ticks, setTicks] = useState([]);
 
-  function updateScore(amount) {
-    if (amount > 0) {
-      updateStreak(true);
-    } else {
-      updateStreak(false);
-    }
-
-    setScore((prevScore) => (prevScore += amount));
-  }
-
-  function updateStreak(bool) {
-    if (bool) {
-      setStreak((prevStreak) => (prevStreak += 1));
-    } else {
-      setStreak(0);
-    }
-  }
-
-  const setTargetWidth = () => {
-    // Any smaller than 3rem and the targets are too tiny
-    if (TARGET_WIDTH < 3) return;
-
-    document
-      .querySelector(":root")
-      .style.setProperty("--TARGET_WIDTH", TARGET_WIDTH + "rem");
-  };
-
-  setTargetWidth();
-
-  function getRandomInt(max, min = 0) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min) + min);
-    //The maximum is exclusive and the minimum is inclusive
-  }
-
-  const togglePause = () => {
-    // manage game loop
-    setPause((prevState) => !prevState);
-    toggleTicks();
-    addTarget(targets);
-  };
-
-  function addTarget(currentTargets, amount = MAX_TARGETS) {
-    if (currentTargets.length < amount) {
-      const newTargets = currentTargets;
-      const elmId = uuid4() + "," + getRandomInt(PATTERNS.length, 0);
-      newTargets.push(elmId);
-      setTargets([...newTargets]);
-
-      addTarget(newTargets, amount);
-    }
-  }
-
-  function destroyTarget(id) {
-    const targetElm = document.getElementById(id);
-    targetElm.classList.add("explosion");
-    targetElm.setAttribute("data", "animation");
-
-    setTimeout(() => {
-      targetElm.classList.remove("explosion");
-      targetElm.style.display = "none";
-      targetElm.setAttribute("data", "destroyed");
-    }, 800);
-  }
-
-  const removeDestroyedTargets = () => {
-    const destroyed = document.querySelectorAll('[data="destroyed"]');
-    if (destroyed.length === 0) return;
-
-    const newTargets = targets;
-    destroyed.forEach((elm) => {
-      const index = newTargets.indexOf(elm.id);
-      if (newTargets[index]) {
-        newTargets.splice(index, 1);
-      } else {
-        console.error(
-          "destroyed element is not indexing properly for removeDestroyedTargets()."
-        );
-      }
-    });
-    setTargets([...newTargets]);
-    addTarget(newTargets);
-  };
-
-  const toggleTicks = () => {
-    if (pause) {
-      // unpause the game
-      const newTicks = setInterval(onTick, INTERVAL);
-      setTicks((prevState) => newTicks);
-    } else {
-      // pause the game
-      clearInterval(ticks);
-    }
-  };
-
-  const onTick = () => {
-    // clear destroyed
-    removeDestroyedTargets();
-
+  const handleMove = () => {
     // move targets
     const allTargets = document.querySelectorAll('[data="target"]');
     const containerElm = document.querySelector("#target-container");
@@ -554,6 +457,117 @@ function App() {
     });
   };
 
+  const removeDestroyedTargets = () => {
+    const destroyed = document.querySelector("[data-destroyed]");
+    if (!destroyed) return targets;
+
+    const newTargets = targets;
+    const index = newTargets.indexOf(destroyed.id);
+    if (newTargets[index]) {
+      newTargets.splice(index, 1);
+      setTargets([...newTargets]);
+      return newTargets;
+    } else {
+      console.error(
+        "destroyed element is not indexing properly for removeDestroyedTargets()."
+      );
+    }
+  };
+
+  const handleSpawn = () => {
+    const currentTargets = removeDestroyedTargets();
+    addTarget(currentTargets);
+  };
+
+  function toggleTicks(clearCondition = true, startCondition = true) {
+    if (clearCondition) {
+      clearInterval(ticks[0]);
+    }
+
+    if (startCondition) {
+      const move = setInterval(handleMove, MOVEMENT_LAG);
+      //handleSpawn();
+      const spawn = setInterval(handleSpawn, SPAWN_TIMER);
+      setTicks((prevState) => [move, spawn]);
+
+      if (score === 0) {
+        handleSpawn();
+      }
+    }
+  }
+
+  function updateScore(amount) {
+    if (amount > 0) {
+      updateStreak(true);
+    } else {
+      updateStreak(false);
+    }
+
+    setScore((prevScore) => (prevScore += amount));
+  }
+
+  function updateSpawnTimer(newTime) {
+    if (isNaN(newTime)) return;
+
+    setTimer(newTime);
+    return newTime;
+  }
+
+  function updateStreak(bool) {
+    if (bool) {
+      setStreak((prevStreak) => (prevStreak += 1));
+    } else {
+      setStreak(0);
+    }
+  }
+
+  function setTargetWidth(width) {
+    if (isNaN(width)) return;
+
+    if (width != TARGET_WIDTH) {
+      setMaxWidth(width);
+    }
+    document
+      .querySelector(":root")
+      .style.setProperty("--TARGET_WIDTH", width + "rem");
+  }
+
+  setTargetWidth(TARGET_WIDTH);
+
+  function getRandomInt(max, min = 0) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min);
+    //The maximum is exclusive and the minimum is inclusive
+  }
+
+  const togglePause = () => {
+    // manage game loop
+    setPause((prevState) => !prevState);
+    toggleTicks(!pause, pause);
+  };
+
+  function addTarget(currentTargets, amount = MAX_TARGETS) {
+    if (currentTargets.length < amount) {
+      const newTargets = currentTargets;
+      const elmId = uuid4() + "," + getRandomInt(PATTERNS.length, 0);
+      newTargets.push(elmId);
+      setTargets([...newTargets]);
+    }
+  }
+
+  function destroyTarget(id) {
+    const targetElm = document.getElementById(id);
+    targetElm.classList.add("explosion");
+    targetElm.setAttribute("data", "animation");
+
+    setTimeout(() => {
+      targetElm.classList.remove("explosion");
+      targetElm.style.display = "none";
+      targetElm.setAttribute("data-destroyed", "true");
+    }, 800);
+  }
+
   const createPopup = () => {
     const popup = document.createElement("div");
     popup.classList.add("popup-message");
@@ -576,7 +590,7 @@ function App() {
   const controls = {
     max: { current: MAX_TARGETS, set: setMaxTargets },
     speed: { current: TARGET_SPEED, set: setTargetSpeed },
-    width: { current: TARGET_WIDTH, set: setMaxWidth },
+    width: { current: TARGET_WIDTH, set: setTargetWidth },
   };
 
   return (

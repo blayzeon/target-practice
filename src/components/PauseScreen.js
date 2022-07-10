@@ -3,7 +3,7 @@ import React from "react";
 export default function PauseScreen(props) {
   const setTargets = () => {
     const a = prompt(
-      "What would you like to set for the max number of targets that can appear on screen?"
+      "Enter the max number of targets that can appear on screen: "
     );
 
     const answer = parseInt(a);
@@ -14,7 +14,7 @@ export default function PauseScreen(props) {
 
   const setSpeed = () => {
     const a = prompt(
-      "What would you like to set for the max number of targets that can appear on screen?"
+      "Enter a number to multiply the speed of the targets by: "
     );
 
     const answer = parseInt(a);
@@ -24,13 +24,12 @@ export default function PauseScreen(props) {
   };
 
   const setWidth = () => {
-    const a = prompt(
-      "What would you like to set for the max number of targets that can appear on screen?"
-    );
+    const a = prompt("Enter a number to multiply the size of targets by: ");
 
     const answer = parseInt(a);
     if (!answer) return;
     if (isNaN(answer)) return;
+
     props.controls.width.set(answer);
   };
 
