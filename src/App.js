@@ -33,8 +33,49 @@ function App() {
     ],
     [
       {
-        // L
+        // L-shape
         speed: [0, TARGET_SPEED], // down
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, 0],
+        multiplier: [-1, -1],
+      },
+      {
+        // L-shape
+        speed: [0, TARGET_SPEED], // down
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [0, TARGET_SPEED],
         multiplier: [-2, -2],
       },
       {
@@ -54,11 +95,27 @@ function App() {
         multiplier: [-2, -2],
       },
       {
-        speed: [TARGET_SPEED, 0], // right
+        speed: [TARGET_SPEED, 0],
         multiplier: [-2, -2],
       },
       {
-        speed: [TARGET_SPEED, 0], // right
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [-2, -2],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
         multiplier: [-2, -2],
       },
     ],
@@ -120,15 +177,7 @@ function App() {
     [
       {
         // charge 'n shoot
-        speed: [TARGET_SPEED, 0], // left
-        multiplier: [1, 1],
-      },
-      {
         speed: [TARGET_SPEED, 0], // windup
-        multiplier: [-5, 0],
-      },
-      {
-        speed: [TARGET_SPEED, 0],
         multiplier: [-4, 0],
       },
       {
@@ -142,6 +191,10 @@ function App() {
       {
         speed: [TARGET_SPEED, 0],
         multiplier: [-1, 0],
+      },
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [0, 0],
       },
       {
         speed: [0, 0],
@@ -392,13 +445,13 @@ function App() {
       const small = elm;
 
       const left = getRandomInt(
-        big.right - small.clientWidth,
-        big.left + small.clientWidth
+        big.right - small.clientWidth * 1.5,
+        big.left + small.clientWidth * 1.5
       );
 
       const top = getRandomInt(
-        big.bottom - small.clientHeight,
-        big.top + small.clientHeight
+        big.bottom - small.clientHeight * 1.5,
+        big.top + small.clientHeight * 1.5
       );
 
       return { top, left };
@@ -448,8 +501,8 @@ function App() {
         if (reverse === "true") {
           reverse = [];
           const offsets = calcOffsets(containerElm, target);
-          reverse.push(offsets.left > containerElm.clientWidth / 2 ? -1 : 1);
-          reverse.push(offsets.top > containerElm.clientHeight / 2 ? -1 : 1);
+          reverse.push(offsets.left > containerElm.clientWidth * 0.3 ? -1 : 1);
+          reverse.push(offsets.top > containerElm.clientHeight * 0.3 ? -1 : 1);
           target.setAttribute("data-reverse", `${reverse[0]},${reverse[1]}`);
         } else {
           reverse = reverse.split(",");
@@ -482,9 +535,35 @@ function App() {
       moveMe();
       if (isCollision(containerElm, target)) {
         updateScore(-1);
+        const popup = createPopup();
+
+        // grabs the coordinate from the style string and formats it into an array
+        let coords = target
+          .getAttribute("style")
+          .replace("left: ", "")
+          .replace("px; top:", "")
+          .replace("px;", "")
+          .split(" ");
+
+        popup.style.left = coords[0] + "px";
+        popup.style.top = coords[1] + "px";
+        popup.innerText = "miss!";
+
         destroyTarget(target.getAttribute("id"));
       }
     });
+  };
+
+  const createPopup = () => {
+    const popup = document.createElement("div");
+    popup.classList.add("popup-message");
+    document.getElementById("root").appendChild(popup);
+
+    // timeout should match .popup-message animation time
+    setTimeout(() => {
+      popup.remove();
+    }, 3000);
+    return popup;
   };
 
   window.onkeydown = (e) => {
@@ -517,6 +596,7 @@ function App() {
           containerId="target-container"
           getRandomInt={getRandomInt}
           incrScore={updateScore}
+          createPopup={createPopup}
         />
       </div>
     </>
