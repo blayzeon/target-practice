@@ -7,10 +7,25 @@ import "./styling/app.css";
 
 function App() {
   /* <SETTINGS> */
-  let MAX_TARGETS = 5;
+  const INTERVAL = 60;
+  let MAX_TARGETS = 11;
   let TARGET_SPEED = 5;
   let TARGET_WIDTH = 5;
-  let TARGET_DELAY = 1000;
+  let TARGET_DELAY = 80;
+  const PATTERNS = [
+    [
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [1, 1],
+      },
+    ],
+    [
+      {
+        speed: [TARGET_SPEED, 0],
+        multiplier: [1, 1],
+      },
+    ],
+  ];
 
   /* </SETTINGS> */
 
@@ -87,7 +102,7 @@ function App() {
   const toggleTicks = () => {
     if (pause) {
       // unpause the game
-      const newTicks = setInterval(onTick, 500);
+      const newTicks = setInterval(onTick, INTERVAL);
       setTicks((prevState) => newTicks);
     } else {
       // pause the game
@@ -138,52 +153,68 @@ function App() {
 
     function moveTarget(
       target,
-      left,
-      top,
-      speed = { left: 0, top: 0 },
-      multiplier = 1
+      patternObj,
+      reverse = [1, 1],
+      leftOffset,
+      topOffset
     ) {
-      target.style.left = left + speed.left * multiplier + "px";
-      target.style.top = top + speed.top * multiplier + "px";
+      const left = leftOffset ? leftOffset : target.offsetLeft;
+      const top = topOffset ? topOffset : target.offsetTop;
+      const obj = patternObj ? patternObj : PATTERNS[0];
+      target.style.left =
+        left + obj.speed[0] * obj.multiplier[0] * reverse[0] + "px";
+      target.style.top =
+        top + obj.speed[1] * obj.multiplier[1] * reverse[1] + "px";
     }
 
     allTargets.forEach((target) => {
       const moveMe = () => {
-        const multiplier = target.getAttribute("data-speed");
-        const direction = target.getAttribute("data-direction");
+        const index = parseInt(target.getAttribute("data-frame"));
+        const myPattern = PATTERNS[0][index];
 
-        // chooses the direction to move
-        const speed = {
-          left: direction === "left" ? TARGET_SPEED : 0,
-          top: direction === "top" ? TARGET_SPEED : 0,
-        };
+        // spawn kill protection
+        let reverse = target.getAttribute("data-reverse");
 
-        const left = target.offsetLeft;
-        const top = target.offsetTop;
-        moveTarget(target, left, top, speed, multiplier);
+        if (reverse === "true") {
+          reverse = [];
+          console.log(true);
+          const offsets = calcOffsets(containerElm, target);
+          reverse.push(offsets.left > containerElm.clientWidth / 2 ? -1 : 1);
+          reverse.push(offsets.top > containerElm.clientHeight / 2 ? -1 : 1);
+          target.setAttribute("data-reverse", `${reverse[0]},${reverse[1]}`);
+          console.log(reverse);
+        } else {
+          reverse = reverse.split(",");
+        }
+
+        // move the target and increase frame
+        moveTarget(target, myPattern, reverse);
+        const newIndex = index + 1 >= PATTERNS[0].length - 1 ? 0 : index + 1;
+        target.setAttribute("data-frame", newIndex);
       };
 
       // check for new targets and relocate them to a random spot and assign a direction
       if (target.classList.contains("new-target")) {
         // place randomly
         const offsets = calcOffsets(containerElm, target);
-        moveTarget(target, offsets.left, offsets.top);
+        moveTarget(
+          target,
+          {
+            speed: [0, 0],
+            multiplier: [1, 1],
+          },
+          [1, 1],
+          offsets.left,
+          offsets.top
+        );
         target.classList.remove("new-target");
-
-        // assign direction based off of the furthest wall
-        const direction = getRandomInt(2) === 0 ? "left" : "top";
-        const containerSize =
-          direction === "left" ? "clientWidth" : "clientHeight";
-        const multiplier =
-          offsets[direction] > containerElm[containerSize] / 2 ? -1 : 1;
-
-        target.setAttribute("data-speed", multiplier);
-        target.setAttribute("data-direction", direction);
       }
 
       // move the target
-
       moveMe();
+      if (isCollision(containerElm, target)) {
+        destroyTarget(target.getAttribute("id"));
+      }
     });
   };
 

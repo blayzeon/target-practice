@@ -6,6 +6,8 @@ export default function Target(props) {
       id={props.id}
       className="new-target target"
       data="target"
+      data-frame="0"
+      data-reverse="true"
       onClick={props.handleClick}
     >
       <div>
