@@ -165,6 +165,8 @@ sup {
 .control-menu > button {
   all: unset;
   cursor: pointer;
+  user-select: none;
+  min-width: 10rem;
 }
 
 .control-menu > button:hover {
